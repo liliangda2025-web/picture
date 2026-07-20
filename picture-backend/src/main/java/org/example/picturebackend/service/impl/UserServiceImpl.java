@@ -78,10 +78,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
         if (userAccount.length() < 4) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号错误");
         }
         if (password.length() < 8) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码错误");
         }
         //2.加密
         String encryptPassword = getEncryptPassword(password);
@@ -89,6 +89,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         //3.查看数据库是否存在该用户
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userAccount", userAccount);
+        queryWrapper.eq("userPassword", encryptPassword);
         User user = this.baseMapper.selectOne(queryWrapper);
         //用户不存在
         if (user == null) {
