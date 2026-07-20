@@ -1,11 +1,13 @@
 package org.example.picturebackend.controller;
 
+import lombok.Getter;
 import org.example.picturebackend.common.BaseResponse;
 import org.example.picturebackend.common.ResultUtils;
 import org.example.picturebackend.exception.ErrorCode;
 import org.example.picturebackend.exception.ThrowUtil;
 import org.example.picturebackend.model.dto.UserLoginRequest;
 import org.example.picturebackend.model.dto.UserRegisterRequest;
+import org.example.picturebackend.model.entity.User;
 import org.example.picturebackend.model.vo.LoginUserVO;
 import org.example.picturebackend.service.UserService;
 import org.springframework.web.bind.annotation.*;
@@ -53,4 +55,33 @@ public class UserController {
         return ResultUtils.success(result);
 
     }
+
+    /**
+     * 获取当前登录用户
+     *
+     * @param request
+     * @return
+     */
+    @GetMapping("/get/login")
+    public BaseResponse<LoginUserVO> getLoginUser(HttpServletRequest request) {
+        ThrowUtil.throwIf(request == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(userService.getLoginUserVO(loginUser));
+
+    }
+
+    /**
+     * 注销当前用户
+     *
+     * @param request
+     * @return
+     */
+    @GetMapping("/logout")
+    public BaseResponse<Boolean> userLogout(HttpServletRequest request) {
+        ThrowUtil.throwIf(request == null, ErrorCode.PARAMS_ERROR);
+        Boolean result = userService.userLogout(request);
+        return ResultUtils.success(result);
+
+    }
+
 }
