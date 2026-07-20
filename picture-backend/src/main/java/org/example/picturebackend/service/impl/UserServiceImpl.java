@@ -3,14 +3,21 @@ package org.example.picturebackend.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.example.picturebackend.exception.BusinessException;
 import org.example.picturebackend.exception.ErrorCode;
 import org.example.picturebackend.model.entity.User;
 import org.example.picturebackend.model.enums.UserRoleEnum;
+import org.example.picturebackend.model.vo.LoginUserVO;
 import org.example.picturebackend.service.UserService;
 import org.example.picturebackend.mapper.UserMapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+
+import javax.servlet.http.HttpServletRequest;
+
+import static org.example.picturebackend.constant.UserConstant.USER_LOGIN_STATE;
 
 /**
  * @author Administrator
@@ -18,6 +25,7 @@ import org.springframework.util.DigestUtils;
  * @createDate 2026-07-20 18:13:58
  */
 @Service
+@Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         implements UserService {
 
@@ -56,11 +64,40 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         user.setUserName("无名");
         user.setUserRole(UserRoleEnum.USER.getValue());
         boolean saveResult = save(user);
-        if (!saveResult){
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"注册失败，数据库错误");
+        if (!saveResult) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
         }
 
         return user.getId();
+    }
+
+    @Override
+    public LoginUserVO Login(String userAccount, String password, HttpServletRequest request) {
+        //1.校验
+        if (StrUtil.hasBlank(userAccount, password)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
+        }
+        if (userAccount.length() < 4) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号为空");
+        }
+        if (password.length() < 8) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码为空");
+        }
+        //2.加密
+        String encryptPassword = getEncryptPassword(password);
+
+        //3.查看数据库是否存在该用户
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userAccount", userAccount);
+        User user = this.baseMapper.selectOne(queryWrapper);
+        //用户不存在
+        if (user == null) {
+            log.info("用户登录失败，找不到该用户或者用户和密码不匹配！");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户不存在或者密码错误");
+        }
+        //记录角色登录态
+        request.getSession().setAttribute(USER_LOGIN_STATE, user);
+        return this.getLoginUserVO(user);
     }
 
     @Override
@@ -69,7 +106,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         final String SALT = "Daring";
         return DigestUtils.md5DigestAsHex((SALT + password).getBytes());
     }
+
+    @Override
+    public LoginUserVO getLoginUserVO(User user) {
+        if (user == null) {
+            return null;
+        }
+        LoginUserVO loginUserVO = new LoginUserVO();
+        BeanUtils.copyProperties(user, loginUserVO);
+        return loginUserVO;
+    }
 }
+
 
 
 
