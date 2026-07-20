@@ -8,7 +8,7 @@ public class ThrowUtil {
      * @param condition
      * @param runtimeException
      */
-    private static void throwIf(boolean condition, RuntimeException runtimeException) {
+    public static void throwIf(boolean condition, RuntimeException runtimeException) {
         if (condition) {
             throw runtimeException;
         }
@@ -20,7 +20,7 @@ public class ThrowUtil {
      * @param condition
      * @param errorCode
      */
-    private static void throwIf(boolean condition, ErrorCode errorCode) {
+    public static void throwIf(boolean condition, ErrorCode errorCode) {
         if (condition) {
             throw new BusinessException(errorCode);
         }
@@ -33,7 +33,7 @@ public class ThrowUtil {
      * @param errorCode
      * @param message
      */
-    private static void throwIf(boolean condition, ErrorCode errorCode, String message) {
+    public static void throwIf(boolean condition, ErrorCode errorCode, String message) {
         if (condition) {
             throw new BusinessException(errorCode.getCode(), message);
         }
