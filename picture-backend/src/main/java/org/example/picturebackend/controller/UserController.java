@@ -1,8 +1,9 @@
 package org.example.picturebackend.controller;
 
-import lombok.Getter;
+import org.example.picturebackend.annotation.AuthCheck;
 import org.example.picturebackend.common.BaseResponse;
 import org.example.picturebackend.common.ResultUtils;
+import org.example.picturebackend.constant.UserConstant;
 import org.example.picturebackend.exception.ErrorCode;
 import org.example.picturebackend.exception.ThrowUtil;
 import org.example.picturebackend.model.dto.UserLoginRequest;
@@ -80,6 +81,14 @@ public class UserController {
     public BaseResponse<Boolean> userLogout(HttpServletRequest request) {
         ThrowUtil.throwIf(request == null, ErrorCode.PARAMS_ERROR);
         Boolean result = userService.userLogout(request);
+        return ResultUtils.success(result);
+
+    }
+
+    @GetMapping("/Test")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> Test() {
+        Boolean result = true;
         return ResultUtils.success(result);
 
     }

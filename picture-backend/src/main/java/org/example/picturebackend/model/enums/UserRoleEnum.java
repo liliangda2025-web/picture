@@ -17,7 +17,7 @@ public enum UserRoleEnum {
     }
 
     //利用值获取枚举
-    public UserRoleEnum getEnumByValue(String value) {
+    public static UserRoleEnum getEnumByValue(String value) {
         //入参校验
         if (ObjUtil.isEmpty(value)) {
             return null;
