@@ -1,14 +1,18 @@
 package org.example.picturebackend.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.example.picturebackend.exception.BusinessException;
 import org.example.picturebackend.exception.ErrorCode;
+import org.example.picturebackend.model.dto.user.UserQueryRequest;
 import org.example.picturebackend.model.entity.User;
 import org.example.picturebackend.model.enums.UserRoleEnum;
 import org.example.picturebackend.model.vo.LoginUserVO;
+import org.example.picturebackend.model.vo.UserVO;
 import org.example.picturebackend.service.UserService;
 import org.example.picturebackend.mapper.UserMapper;
 import org.springframework.beans.BeanUtils;
@@ -16,6 +20,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.example.picturebackend.constant.UserConstant.USER_LOGIN_STATE;
 
@@ -134,6 +141,47 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         LoginUserVO loginUserVO = new LoginUserVO();
         BeanUtils.copyProperties(user, loginUserVO);
         return loginUserVO;
+    }
+
+    @Override
+    public UserVO getUserVO(User user) {
+        if (user == null) {
+            return null;
+        }
+        UserVO userVO = new UserVO();
+        BeanUtils.copyProperties(user, userVO);
+        return userVO;
+    }
+
+    @Override
+    public List<UserVO> getUserVOList(List<User> userList) {
+        //判断列表是否为空而不是判断是否有列表
+        if (CollUtil.isEmpty(userList)) {
+            return null;
+        }
+        return userList.stream().map(this::getUserVO).collect(Collectors.toList());
+    }
+
+    @Override
+    public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
+        if (userQueryRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空！");
+        }
+        Long id = userQueryRequest.getId();
+        String userName = userQueryRequest.getUserName();
+        String userAccount = userQueryRequest.getUserAccount();
+        String userProfile = userQueryRequest.getUserProfile();
+        String userRole = userQueryRequest.getUserRole();
+        String sortField = userQueryRequest.getSortField();
+        String sortOrder = userQueryRequest.getSortOrder();
+        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+        userQueryWrapper.eq(ObjUtil.isNotNull(id), "id", id);
+        userQueryWrapper.eq(StrUtil.isNotBlank(userRole), "userRole", userRole);
+        userQueryWrapper.like(StrUtil.isNotBlank(userName), "userName", userName);
+        userQueryWrapper.like(StrUtil.isNotBlank(userProfile), "userProfile", userProfile);
+        userQueryWrapper.eq(StrUtil.isNotBlank(userAccount), "userAccount", userAccount);
+        userQueryWrapper.orderBy(StrUtil.isNotEmpty(sortField), sortOrder.equals("ascend"), sortField);
+        return userQueryWrapper;
     }
 
     @Override

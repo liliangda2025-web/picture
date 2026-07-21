@@ -1,6 +1,6 @@
 package org.example.picturebackend.exception;
 
-public class ThrowUtil {
+public class ThrowUtils {
 
     /**
      * 条件成立，则抛异常
