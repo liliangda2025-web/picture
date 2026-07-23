@@ -5,7 +5,12 @@ server:
 spring:
   application:
     name: picture-backend
-
+  profiles:
+    active: local
+  # 开放更大的文件上传体积
+  servlet:
+    multipart:
+      max-file-size: 10MB
   #数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -25,13 +30,15 @@ mybatis-plus:
 
 #knife4j配置
 knife4j:
-    enable: true
-    openapi:
-      title: "接口文档"
-      version: 1.0
-      group:
-        default:
-          api-rule: package
-          api-rule-resources:
-            - org.example.picturebackend.controller
+  enable: true
+  openapi:
+    title: "接口文档"
+    version: 1.0
+    group:
+      default:
+        api-rule: package
+        api-rule-resources:
+          - org.example.picturebackend.controller
+
+
 
