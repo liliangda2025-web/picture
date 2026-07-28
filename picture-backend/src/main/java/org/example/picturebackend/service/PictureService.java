@@ -1,11 +1,16 @@
 package org.example.picturebackend.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.example.picturebackend.model.dto.picture.PictureQueryRequest;
 import org.example.picturebackend.model.dto.picture.PictureUploadRequest;
 import org.example.picturebackend.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.example.picturebackend.model.entity.User;
 import org.example.picturebackend.model.vo.PictureVO;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Administrator
@@ -22,4 +27,37 @@ public interface PictureService extends IService<Picture> {
      * @return
      */
     PictureVO upload(MultipartFile file, PictureUploadRequest pictureUploadRequest, User loginUser);
+
+    /**
+     * 将查询请求转换为QueryWrapper对象
+     *
+     * @param pictureQueryRequest
+     * @return
+     */
+    QueryWrapper<Picture> getQueryWrapper(PictureQueryRequest pictureQueryRequest);
+
+    /**
+     * 获取查询后的单个图片封装对象
+     *
+     * @param picture
+     * @param request
+     * @return
+     */
+    PictureVO getPictureVO(Picture picture, HttpServletRequest request);
+
+    /**
+     * 获取分页图片封装
+     *
+     * @param picturePage
+     * @param request
+     * @return
+     */
+    Page<PictureVO> getPictureVOPage(Page<Picture> picturePage, HttpServletRequest request);
+
+    /**
+     * 校验图片数据，用于照片更新和修改图片
+     *
+     * @param picture
+     */
+    void validPicture(Picture picture);
 }

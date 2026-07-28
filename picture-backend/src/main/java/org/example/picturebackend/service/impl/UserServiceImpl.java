@@ -197,6 +197,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         request.getSession().removeAttribute(USER_LOGIN_STATE);
         return true;
     }
+
+    @Override
+    public boolean isAdmin(User loginUser) {
+        //角色不为空并且该角色为管理员返回ture
+        return loginUser != null && UserRoleEnum.ADMIN.getValue().equals(loginUser.getUserRole());
+    }
 }
 
 

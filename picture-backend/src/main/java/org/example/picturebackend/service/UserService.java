@@ -76,6 +76,7 @@ public interface UserService extends IService<User> {
 
     /**
      * 将查询请求转换为条件构造器用于查询
+     *
      * @param userQueryRequest
      * @return
      */
@@ -88,5 +89,13 @@ public interface UserService extends IService<User> {
      * @return
      */
     boolean userLogout(HttpServletRequest request);
+
+    /**
+     * 判断当前用户是否是管理员
+     *
+     * @param loginUser
+     * @return
+     */
+    boolean isAdmin(User loginUser);
 
 }
