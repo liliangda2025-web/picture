@@ -44,7 +44,13 @@
 </template>
 <script lang="ts" setup>
 import { h, ref } from 'vue'
-import { HomeOutlined, AppstoreOutlined, SettingOutlined } from '@ant-design/icons-vue'
+import {
+  HomeOutlined,
+  AppstoreOutlined,
+  SettingOutlined,
+  PlusSquareOutlined,
+  PictureOutlined,
+} from '@ant-design/icons-vue'
 import { MenuProps, message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 
@@ -55,7 +61,6 @@ const current = ref<string[]>(['mail'])
 router.afterEach((to, from, next) => {
   current.value = [to.path]
 })
-
 
 import { computed, h, ref } from 'vue'
 import checkAccess from '@/access/checkAccess'
@@ -70,9 +75,21 @@ const menus = [
   },
   {
     key: '/admin/userManage',
-    icon: () => h(SettingOutlined),
+    icon: () => h(PictureOutlined),
     label: '用户管理',
     title: '用户管理',
+  },
+  {
+    key: '/admin/pictureManage',
+    icon: () => h(SettingOutlined),
+    label: '图片管理',
+    title: '图片管理',
+  },
+  {
+    key: '/add_picture',
+    icon: () => h(PlusSquareOutlined),
+    label: '创建图片',
+    title: '创建图片',
   },
 ]
 
@@ -90,9 +107,7 @@ const items = computed(() => {
       return false
     }
 
-    const needAccess =
-      (route.meta.access as string | undefined) ??
-      ACCESS_ENUM.NOT_LOGIN
+    const needAccess = (route.meta.access as string | undefined) ?? ACCESS_ENUM.NOT_LOGIN
 
     return checkAccess(loginUserStore.loginUser, needAccess)
   })
