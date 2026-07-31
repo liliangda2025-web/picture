@@ -11,13 +11,11 @@ import org.example.picturebackend.constant.UserConstant;
 import org.example.picturebackend.exception.BusinessException;
 import org.example.picturebackend.exception.ErrorCode;
 import org.example.picturebackend.exception.ThrowUtils;
-import org.example.picturebackend.model.dto.picture.PictureEditRequest;
-import org.example.picturebackend.model.dto.picture.PictureQueryRequest;
-import org.example.picturebackend.model.dto.picture.PictureUpdateRequest;
-import org.example.picturebackend.model.dto.picture.PictureUploadRequest;
+import org.example.picturebackend.model.dto.picture.*;
 import org.example.picturebackend.model.entity.Picture;
 import org.example.picturebackend.model.entity.PictureTagCategory;
 import org.example.picturebackend.model.entity.User;
+import org.example.picturebackend.model.enums.PictureReviewStatusEnum;
 import org.example.picturebackend.model.vo.PictureVO;
 import org.example.picturebackend.service.PictureService;
 import org.example.picturebackend.service.UserService;
@@ -85,7 +83,7 @@ public class PictureController {
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest) {
+    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest, HttpServletRequest request) {
         if (pictureUpdateRequest == null || pictureUpdateRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -100,6 +98,9 @@ public class PictureController {
         long id = pictureUpdateRequest.getId();
         Picture oldPicture = pictureService.getById(id);
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        //补充审核参数
+        User loginUser = userService.getLoginUser(request);
+        pictureService.fillReviewParams(picture, loginUser);
         // 操作数据库
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
@@ -157,6 +158,8 @@ public class PictureController {
         long size = pictureQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        //普通用户默认只能查看已经过审的数据
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
         // 查询数据库
         Page<Picture> picturePage = pictureService.page(new Page<>(current, size),
                 pictureService.getQueryWrapper(pictureQueryRequest));
@@ -190,12 +193,19 @@ public class PictureController {
         if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
+        //补充审核参数
+        pictureService.fillReviewParams(picture, loginUser);
         // 操作数据库
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
     }
 
+    /**
+     * 获取分类和标签信息
+     *
+     * @return
+     */
     @GetMapping("/tag_category")
     public BaseResponse<PictureTagCategory> listPictureTagCategory() {
         PictureTagCategory pictureTagCategory = new PictureTagCategory();
@@ -204,6 +214,23 @@ public class PictureController {
         pictureTagCategory.setTagList(tagList);
         pictureTagCategory.setCategoryList(categoryList);
         return ResultUtils.success(pictureTagCategory);
+    }
+
+    /**
+     * 管理员进行审核
+     *
+     * @param pictureReviewRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/review")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> doPictureReview(@RequestBody PictureReviewRequest pictureReviewRequest,
+                                                 HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureReviewRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        pictureService.doPictureReview(pictureReviewRequest, loginUser);
+        return ResultUtils.success(true);
     }
 
 
