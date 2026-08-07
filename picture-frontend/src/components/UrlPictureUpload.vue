@@ -16,17 +16,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { message } from 'ant-design-vue'
-import type { UploadChangeParam, UploadProps } from 'ant-design-vue'
 import { uploadPictureByUrlUsingPost } from '@/api/pictureController'
-
-function getBase64(img: Blob, callback: (base64Url: string) => void) {
-  const reader = new FileReader()
-  reader.addEventListener('load', () => callback(reader.result as string))
-  reader.readAsDataURL(img)
-}
-
-const fileList = ref([])
-const imageUrl = ref<string>('')
 
 interface Props {
   picture?: API.PictureVO
@@ -35,37 +25,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const handleChange = (info: UploadChangeParam) => {
-  if (info.file.status === 'uploading') {
-    loading.value = true
-    return
-  }
-  if (info.file.status === 'done') {
-    // Get this url from response in real world.
-    getBase64(info.file.originFileObj, (base64Url: string) => {
-      imageUrl.value = base64Url
-      loading.value = false
-    })
-  }
-  if (info.file.status === 'error') {
-    loading.value = false
-    message.error('upload error')
-  }
-}
-
-const beforeUpload = (file: UploadProps['fileList'][number]) => {
-  const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png'
-  if (!isJpgOrPng) {
-    message.error('不支持上传该格式的图片，推荐 jpg 或 png')
-  }
-  const isLt2M = file.size / 1024 / 1024 < 2
-  if (!isLt2M) {
-    message.error('不能上传超过 2M 的图片')
-  }
-  return isJpgOrPng && isLt2M
-}
 const loading = ref<boolean>(false)
-
 const fileUrl = ref<string>()
 
 /**
@@ -86,33 +46,10 @@ const handleUpload = async () => {
     } else {
       message.error('图片上传失败，' + res.data.message)
     }
-  } catch (error) {
+  } catch {
     message.error('图片上传失败')
   } finally {
     loading.value = false
   }
 }
 </script>
-<style scoped>
-.picture-upload :deep(.ant-upload) {
-  width: 100% !important;
-  height: 100% !important;
-  min-height: 152px;
-  min-width: 152px;
-}
-
-.picture-upload img {
-  max-width: 100%;
-  max-height: 480px;
-}
-
-.ant-upload-select-picture-card i {
-  font-size: 32px;
-  color: #999;
-}
-
-.ant-upload-select-picture-card .ant-upload-text {
-  margin-top: 8px;
-  color: #666;
-}
-</style>

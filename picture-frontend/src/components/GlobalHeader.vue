@@ -36,7 +36,7 @@
         </div>
 
         <div v-else>
-          <a-button type="primary" href="/user/login">登录</a-button>
+          <a-button type="primary" @click="router.push('/user/login')">登录</a-button>
         </div>
       </div>
     </a-col>
@@ -90,6 +90,12 @@ const menus = [
     icon: () => h(PlusSquareOutlined),
     label: '创建图片',
     title: '创建图片',
+  },
+  {
+    key: '/add_picture/batch',
+    icon: () => h(PlusSquareOutlined),
+    label: '批量创建图片',
+    title: '批量创建图片',
   },
 ]
 

@@ -2,7 +2,11 @@
   <div id="userManagePage">
     <a-flex justify="space-between">
       <h2>图片管理</h2>
-      <a-button type="primary" href="/add_picture" target="_blank">+ 创建图片</a-button>
+      <a-space>
+        <a-button type="primary" @click="router.push('/add_picture')">+ 创建图片</a-button>
+        <a-button type="primary" @click="router.push('/add_picture/batch')" ghost>+ 批量创建图片</a-button>
+      </a-space>
+
     </a-flex>
     <!-- 搜索表单 -->
     <a-form layout="inline" :model="searchParams" @finish="doSearch">
@@ -95,7 +99,7 @@
             >
               拒绝
             </a-button>
-            <a-button type="link" :href="`/add_picture?id=${record.id}`" target="_blank"
+            <a-button type="link" @click="router.push(`/add_picture?id=${record.id}`)"
               >编辑
             </a-button>
             <a-button type="link" danger @click="doDelete(record.id)">删除</a-button>
@@ -107,8 +111,11 @@
 </template>
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
+
+const router = useRouter()
 import {
   deletePictureUsingPost,
   doPictureReviewUsingPost,
