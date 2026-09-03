@@ -1,5 +1,6 @@
 package org.example.picturebackend.controller;
 
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,9 @@ import org.example.picturebackend.model.vo.PictureVO;
 import org.example.picturebackend.service.PictureService;
 import org.example.picturebackend.service.UserService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,6 +32,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 
 @RestController
 @Slf4j
@@ -37,6 +43,9 @@ public class PictureController {
     UserService userService;
     @Resource
     PictureService pictureService;
+    @Resource
+    StringRedisTemplate stringRedisTemplate;
+
 
     /**
      * 图片上传
@@ -182,6 +191,51 @@ public class PictureController {
     }
 
     /**
+     * 分页获取图片列表（封装类）
+     */
+    @PostMapping("/list/page/vo/cache")
+    public BaseResponse<Page<PictureVO>> listPictureByPageWithCache(@RequestBody PictureQueryRequest pictureQueryRequest,
+                                                                    HttpServletRequest request) {
+        long current = pictureQueryRequest.getCurrent();
+        long size = pictureQueryRequest.getPageSize();
+        //限制爬虫
+        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        //普通用户默认只能查看已经过审的数据
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+
+        //构建缓存key
+        String queryCondition = JSONUtil.toJsonStr(pictureQueryRequest);
+        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
+        String redisKey = "picture:listPictureVOByPage:" + hashKey;
+
+        //从redis缓存中查询
+        //操作对象
+        ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
+        String cachedValue = valueOps.get(redisKey);
+        if (cachedValue != null) {
+            //如果缓存命中，返回结果
+            Page<PictureVO> cachedPage = JSONUtil.toBean(cachedValue, Page.class);
+            return ResultUtils.success(cachedPage);
+        }
+
+        //缓存未命中，查询数据库
+        Page<Picture> picturePage = pictureService.page(new Page<>(current, size),
+                pictureService.getQueryWrapper(pictureQueryRequest));
+
+        //获取封装类
+        Page<PictureVO> pictureVOPage = pictureService.getPictureVOPage(picturePage, request);
+
+        //将查询数据库存入redis缓存
+        String cacheValue = JSONUtil.toJsonStr(pictureVOPage);
+        //设计5-10分钟缓存时间，防止缓存雪崩
+        int cacheExpireTime = 300 + RandomUtil.randomInt(0, 300);
+        valueOps.set(redisKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
+
+        //返回数据库查询结果
+        return ResultUtils.success(pictureVOPage);
+    }
+
+    /**
      * 编辑图片（给用户使用）
      */
     @PostMapping("/edit")
@@ -258,7 +312,6 @@ public class PictureController {
         int uploadCount = pictureService.uploadPictureByBatch(pictureUploadByBatchRequest, loginUser);
         return ResultUtils.success(uploadCount);
     }
-
 
 
 }
